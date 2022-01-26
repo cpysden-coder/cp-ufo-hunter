@@ -46,6 +46,10 @@ function GameBasics(canvas) {
     spaceshipSpeed: 200, //our spaceship's speed 
     bulletSpeed: 130, //our bullet speed
     bulletMaxFrequency: 500, //how fast spaceshit can shoot bullets after each other
+    //ufo settings
+    ufoLines: 4, // number of UFO rows
+    ufoColumns: 8, // number of UFO columns
+    ufoSpeed: 35, //speed of UFO
   };
 
   // we collect here the different positions, states of the game 

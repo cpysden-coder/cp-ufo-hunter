@@ -6,15 +6,49 @@ function InGamePosition(setting, level) {
     this.object = null;
     this.spaceship = null;
     this.bullets = [];
+    this.lastBulletTime = null;
+    this.ufos = [];
 }
 
 InGamePosition.prototype.entry = function (play) {
     this.spaceship_image = new Image(); 
     this.upSec = this.setting.updateSeconds;
     this.spaceshipSpeed = this.setting.spaceshipSpeed;
+    this.ufo_image = new Image();
+    this.turnAround = 1; //for controlling left to right movement of ufos. 1 = they are moving to right, -1 = they are moving to left
 
     this.object = new Objects();
     this.spaceship = this.object.spaceship((play.width / 2), play.playBoundaries.bottom, this.spaceship_image);
+    //values that change with levels(1. UFO speed, 2. Bomb falling speed, 3. Bomb dropping frequency)
+    presentLevel = this.level;
+    //1. UFO Speed
+    this.ufoSpeed = this.setting.ufoSpeed + (presentLevel * 7); //level1: 35 + (1 * 7), level2: 42 + (2 * 7)
+    //2. Bomb falling speed
+
+    //creating UFOS positions
+    const lines = this.setting.ufoLines;
+    const columns = this.setting.ufoColumns;
+    const ufosInitial = [];
+
+    let line, column;
+    //iterate thru lines and columns of UFO
+    for (line = 0; line < lines; line++){
+        for (column = 0; column < columns; column++){
+            this.object = new Objects();
+            let x, y;
+            x = (play.width/2) + (column * 50) - ((columns-1) * 25);
+            y = (play.playBoundaries.top + 30) + (line * 30);
+            ufosInitial.push(this.object.ufo(
+                x,
+                y,
+                line,
+                column,
+                this.ufo_image
+            ))
+        }
+    }
+    this.ufos = ufosInitial;
+
 }
 
 InGamePosition.prototype.update = function (play) {
@@ -49,11 +83,30 @@ InGamePosition.prototype.update = function (play) {
             bullets.splice(i--, 1);
         }
     }
+    //moving UFOs
+    let reachedSide = false;
+
+    for (let i = 0; i < this.ufos.length; i++){
+        let ufo = this.ufos[i];
+        let fresh_x = ufo.x + this.ufoSpeed * upSec * this.turnAround;
+        
+        if (fresh_x > play.playBoundaries.right || fresh_x < play.playBoundaries.left){
+            this.turnAround *= -1;
+            reachedSide = true;
+        }
+        if (reachedSide !== true){   
+            ufo.x = fresh_x;
+        }
+    }
 }
 
 InGamePosition.prototype.shoot = function (){
-    this.object = new Objects();
-    this.bullets.push(this.object.bullet(this.spaceship.x, this.spaceship.y - this.spaceship.height/2, this.setting.bulletSpeed))
+    if(this.lastBulletTime === null || ((new Date()).getTime() - this.lastBulletTime) > (this.setting.bulletMaxFrequency)) {
+        // console.log("We are shooting!");
+        this.object = new Objects();
+        this.bullets.push(this.object.bullet(this.spaceship.x, this.spaceship.y - this.spaceship.height/2, this.setting.bulletSpeed));
+        this.lastBulletTime = (new Date()).getTime();
+    }
 } 
 
 InGamePosition.prototype.draw = function (play) {
@@ -65,6 +118,11 @@ InGamePosition.prototype.draw = function (play) {
         let bullet = this.bullets[i];
         ctx.fillRect(bullet.x-1, bullet.y-6, 2, 6) //2, 6 is size of rectangle for bullet
         //TODO this is not painting bullet on screen. Check the code in resources!!!!!!!!!!!!!!!!!!
+    }
+    //draw UFO
+    for (let i = 0; i < this.ufos.length; i++){
+        let ufo = this.ufos[i];
+        ctx.drawImage(this.ufo_image, ufo.x - (ufo.width/2), ufo.y - (ufo.height/2));
     }
 }
 

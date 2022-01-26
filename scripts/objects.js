@@ -19,3 +19,15 @@ Objects.prototype.bullet = function(x,y){
     this.y = y;
     return this;
 };
+
+Objects.prototype.ufo = function(x, y, line, column, ufo_image){
+    this.x = x;
+    this.y = y;
+    this.line = line; //effectively the row of the ufos
+    this.column = column;
+    this.width = 32;
+    this.height = 24;
+    this.ufo_image = ufo_image;
+    this.ufo_image.src = "images/ufo.png";
+    return this;
+}
