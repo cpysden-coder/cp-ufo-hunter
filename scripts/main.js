@@ -50,6 +50,11 @@ function GameBasics(canvas) {
     ufoLines: 4, // number of UFO rows
     ufoColumns: 8, // number of UFO columns
     ufoSpeed: 35, //speed of UFO
+    ufoSinkingValue: 30, //that's how much the UFO sinks (moves down) at end of each row
+    //bomb parameters
+    bombSpeed: 75, //bomb falling speed
+    bombFrequency: 0.05, // bomb dropping frequency
+
   };
 
   // we collect here the different positions, states of the game 
