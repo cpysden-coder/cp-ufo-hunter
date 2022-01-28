@@ -31,7 +31,11 @@ OpeningPosition.prototype.draw = function(play){
 };
 
 OpeningPosition.prototype.keyDown = function(play, keyboardCode) {
+    //when we start game with Spacebar
     if (keyboardCode == 32) {
+        play.level = 1;
+        play.score = 0;
+        play.shields = 2;
         play.goToPosition(new TransferPosition(play.level));
     }
 };

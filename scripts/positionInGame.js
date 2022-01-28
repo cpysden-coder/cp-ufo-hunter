@@ -155,11 +155,55 @@ InGamePosition.prototype.update = function (play) {
             this.bombs.splice(i--, 1);
         }
     }
-    //temp for demo purposes only to show how the above frontLineUFOs array gets updated
-    // if (this.temp < 1) {
-    //     console.log(frontLineUFOs);
-    //     this.temp++;
-    // }
+    //UFO - bullet collision
+    for (let i = 0; i < this.ufos.length; i++){
+        let ufo = this.ufos[i];
+        let collision = false;
+        for (let j = 0; j < bullets.length; j++){
+            let bullet = this.bullets[j];
+            //collision check
+            if (bullet.x >= (ufo.x - ufo.width/2) && bullet.x <= (ufo.x + ufo.width/2) && bullet.y >= (ufo.y - ufo.height/2) && bullet.y <= (ufo.y + ufo.height/2)) {
+                bullets.splice(j--, 1);
+                collision = true;
+                play.score += this.setting.pointsPerUFO; //increments score when UFO hit by bullet
+            }
+        }
+        //if there's a collision delete UFO
+        if (collision == true){
+            this.ufos.splice(i--, 1);
+            play.sounds.playSound('ufoDeath')
+        }
+    }
+    //consider spaceship collision with a bomb
+    for (let i = 0; i < this.bombs.length; i++){
+        let bomb = this.bombs[i];
+        if (bomb.x + 2 >= (spaceship.x - spaceship.width/2) && bomb.x - 2 <= (spaceship.x + spaceship.width/2) && bomb.y + 6 >= (spaceship.y - spaceship.height/2) && bomb.y <= (spaceship.y + spaceship.height/2)) {
+            this.bombs.splice(i--, 1);
+            play.sounds.playSound('explosion') // play explosion sound
+            //effect on spaceship - go to game over or start position
+            play.shields--;
+            
+        }
+    }
+    //consider UFO and spaceship collision
+    for (let i = 0; i < this.ufos.length; i++){
+        let ufo = this.ufos[i];
+        if((ufo.x + ufo.width/2) > (spaceship.x - spaceship.width/2) && (ufo.x - ufo.width/2) < (spaceship.x + spaceship.width/2) && (ufo.y + ufo.height/2) > (spaceship.y - spaceship.height/2) && (ufo.y - ufo.height/2) < (spaceship.y + spaceship.height/2)) {
+            play.sounds.playSound('explosion')
+            // if there's a collision go to game over or start position
+            play.shields = -1; //instant death
+            
+        }
+    }
+    // handle shields and game updates
+    if(play.shields < 0){
+        play.goToPosition(new OpeningPosition());
+    }
+    // update level during play - base on ufos array being empty
+    if(this.ufos.length == 0){
+        play.level += 1;
+        play.goToPosition(new TransferPosition(play.level));
+    }
 }
 
 InGamePosition.prototype.shoot = function (){
@@ -168,8 +212,11 @@ InGamePosition.prototype.shoot = function (){
         this.object = new Objects();
         this.bullets.push(this.object.bullet(this.spaceship.x, this.spaceship.y - this.spaceship.height/2, this.setting.bulletSpeed));
         this.lastBulletTime = (new Date()).getTime();
+        play.sounds.playSound('shot'); //whenever we hit a space there is a shot and this will now be associated with the shoot function
     }
 } 
+
+
 
 InGamePosition.prototype.draw = function (play) {
     ctx.clearRect(0, 0, play.width, play.height);
@@ -192,13 +239,58 @@ InGamePosition.prototype.draw = function (play) {
         let bomb = this.bombs[i];
         ctx.fillRect(bomb.x -2, bomb.y, 4, 6)
     }
+    //draw Sound & Mute info
+    ctx.font = "16px Comic Sans MS";
+    ctx.fillStyle = "#424242";
+    ctx.textAlign = "left";
+    ctx.fillText("Press s to switch sound effects on/off. Sound:", play.playBoundaries.left, play.playBoundaries.bottom + 70);
+    //post to screen if sound is on or off
+    let soundStatus = (play.sounds.muted === true) ? "OFF" : "ON";
+    ctx.fillStyle = (play.sounds.muted === true) ? "#FF0000" : "#0B6121";
+    ctx.fillText(soundStatus, play.playBoundaries.left + 375, play.playBoundaries.bottom + 70);
+
+    ctx.fillStyle = "#424242";
+    ctx.textAlign = "right";
+    ctx.fillText("Press p to pause.", play.playBoundaries.right, play.playBoundaries.bottom + 70);
+
+    //show user score and level in game canvas
+    ctx.fillStyle = "#BDBDBD";
+    ctx.textAlign = "center";
+    //score
+    ctx.font = "24px Comic Sans MS";
+    ctx.fillText("Score", play.playBoundaries.right, play.playBoundaries.top - 75);
+    ctx.font = "30px Comic Sans MS";
+    ctx.fillText(play.score, play.playBoundaries.right, play.playBoundaries.top - 25);
+    //level
+    ctx.font = "24px Comic Sans MS";
+    ctx.fillText("Level", play.playBoundaries.left, play.playBoundaries.top - 75);
+    ctx.font = "30px Comic Sans MS";
+    ctx.fillText(play.level, play.playBoundaries.left, play.playBoundaries.top - 25);
+    //shields status
+    ctx.textAlign = "center";
+    if(play.shields > 0){
+        ctx.fillStyle = "#BDBDBD";
+        ctx.font = "bold 24px Comic Sans MS";
+        ctx.fillText("Shields", play.width/2, play.playBoundaries.top -75);
+        ctx.font = "bold 30px Comic Sans MS";
+        ctx.fillText(play.shields, play.width/2, play.playBoundaries.top -25);
+    } else {
+        ctx.fillStyle = "#ff4d4d";
+        ctx.font = "bold 24px Comic Sans MS";
+        ctx.fillText("WARNING", play.width/2, play.playBoundaries.top -75);
+        ctx.fillStyle = "#BDBDBD";
+        ctx.fillText("No shields left", play.width/2, play.playBoundaries.top -25);
+    }
 }
 
 InGamePosition.prototype.keyDown = function (play, keyboardCode) {
-        // if(keyboardCode == 37) {
-        //     this.spaceship.x -= this.spaceshipSpeed * this.upSec;
-        // }
-        // if(keyboardCode == 39) {
-        //     this.spaceship.x += this.spaceshipSpeed * this.upSec;
-        // }
+    // lowercase s to mute
+    if(keyboardCode == 83){
+        play.sounds.muteSwitch();
+    }
+    // lowercase p to pause
+    if(keyboardCode == 80){
+        play.pushPosition(new PausePosition())
+
+    }
 }

@@ -54,7 +54,8 @@ function GameBasics(canvas) {
     //bomb parameters
     bombSpeed: 75, //bomb falling speed
     bombFrequency: 0.05, // bomb dropping frequency
-
+    //point system
+    pointsPerUFO: 25,
   };
 
   // we collect here the different positions, states of the game 
@@ -75,7 +76,7 @@ GameBasics.prototype.goToPosition = function (position) {
   if (this.presentPosition()) {
     this.positionContainer.length = 0;
   }
-  // If we finds an 'entry' in a given position, we call it. 
+  // If we find an 'entry' in a given position, we call it. 
   if (position.entry) {
     position.entry(play);
   }
@@ -147,4 +148,8 @@ window.addEventListener("keyup", function (e) {
 
 // Create a GameBasics object
 const play = new GameBasics(canvas);
+//handle sounds
+play.sounds = new Sounds();
+play.sounds.init();
+
 play.start();
