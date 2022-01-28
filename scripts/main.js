@@ -21,102 +21,108 @@ function resize() {
 window.addEventListener('load', resize, false);
 
 // Game Basics
-function GameBasics(canvas) {
+class GameBasics {
+  constructor(canvas) {
 
-  this.canvas = canvas;
-  this.width = canvas.width;
-  this.height = canvas.height;
+    this.canvas = canvas;
+    this.width = canvas.width;
+    this.height = canvas.height;
 
-  // active playing field
-  this.playBoundaries = {
-    top: 150,
-    bottom: 650,
-    left: 100,
-    right: 800
-  };
+    // active playing field
+    this.playBoundaries = {
+      top: 150,
+      bottom: 650,
+      left: 100,
+      right: 800
+    };
 
-  // initial values
-  this.level = 1;
-  this.score = 0;
-  this.shields = 2;
+    // initial values
+    this.level = 1;
+    this.score = 0;
+    this.shields = 2;
 
-  // game settings
-  this.setting = {  
-    updateSeconds: (1 / 60), //FPS: 60 frame per 1 second, this means 1 new frame in every 0,01666667 seconds
-    spaceshipSpeed: 200, //our spaceship's speed 
-    bulletSpeed: 130, //our bullet speed
-    bulletMaxFrequency: 500, //how fast spaceshit can shoot bullets after each other
-    //ufo settings
-    ufoLines: 4, // number of UFO rows
-    ufoColumns: 8, // number of UFO columns
-    ufoSpeed: 35, //speed of UFO
-    ufoSinkingValue: 30, //that's how much the UFO sinks (moves down) at end of each row
-    //bomb parameters
-    bombSpeed: 75, //bomb falling speed
-    bombFrequency: 0.05, // bomb dropping frequency
-    //point system
-    pointsPerUFO: 25,
-  };
+    // game settings
+    this.setting = {
+      updateSeconds: (1 / 60),
+      spaceshipSpeed: 200,
+      bulletSpeed: 130,
+      bulletMaxFrequency: 500,
 
-  // we collect here the different positions, states of the game 
-  this.positionContainer = [];
+      //ufo settings
+      ufoLines: 4,
+      ufoColumns: 8,
+      ufoSpeed: 35,
+      ufoSinkingValue: 30,
 
-  // pressed keys storing
-  this.pressedKeys = {};
+      //bomb parameters
+      bombSpeed: 75,
+      bombFrequency: 0.05,
+
+      //point system
+      pointsPerUFO: 25,
+    };
+
+    // we collect here the different positions, states of the game 
+    this.positionContainer = [];
+
+    // pressed keys storing
+    this.pressedKeys = {};
+  }
+  //  Return to current game position, status. Always returns the top element of positionContainer.
+  presentPosition() {
+    return this.positionContainer.length > 0 ? this.positionContainer[this.positionContainer.length - 1] : null;
+  }
+  // Move to the desired position
+  goToPosition(position) {
+    // If we're already in a position clear the positionContainer.
+    if (this.presentPosition()) {
+      this.positionContainer.length = 0;
+    }
+    // If we find an 'entry' in a given position, we call it. 
+    if (position.entry) {
+      position.entry(play);
+    }
+    // Setting the current game position in the positionContainer
+    this.positionContainer.push(position);
+  }
+  // Push our new position into the positionContainer 
+  pushPosition(position) {
+    this.positionContainer.push(position);
+  }
+  // Pop the position from the positionContainer
+  popPosition() {
+    this.positionContainer.pop();
+  }
+  // GameBasics start - Starting the loop
+  start() {
+    //Specify the interval in milliseconds 
+    setInterval(function () { gameLoop(play); }, this.setting.updateSeconds * 1000); //0,01666667 sec * 1000 = 16,67 ms
+
+    //Go into the Opening position
+    this.goToPosition(new OpeningPosition());
+  }
+  // Notifies the game when a key is pressed
+  keyDown(keyboardCode) {
+    // store the pressed key in 'pressedKeys'
+    this.pressedKeys[keyboardCode] = true;
+    //  it calls the present position's keyDown function
+    if (this.presentPosition() && this.presentPosition().keyDown) {
+      this.presentPosition().keyDown(this, keyboardCode);
+    }
+  }
+  //  Notifies the game when a key is released
+  keyUp(keyboardCode) {
+    // delete the released key from 'pressedKeys'
+    delete this.pressedKeys[keyboardCode];
+  }
 }
 
-//  Return to current game position, status. Always returns the top element of positionContainer.
-GameBasics.prototype.presentPosition = function () {
-  return this.positionContainer.length > 0 ? this.positionContainer[this.positionContainer.length - 1] : null;
-};
 
-// Move to the desired position
-GameBasics.prototype.goToPosition = function (position) {
-  // If we're already in a position clear the positionContainer.
-  if (this.presentPosition()) {
-    this.positionContainer.length = 0;
-  }
-  // If we find an 'entry' in a given position, we call it. 
-  if (position.entry) {
-    position.entry(play);
-  }
-  // Setting the current game position in the positionContainer
-  this.positionContainer.push(position);
-};
 
-// Push our new position into the positionContainer 
-GameBasics.prototype.pushPosition = function (position) {
-  this.positionContainer.push(position);
-};
 
-// Pop the position from the positionContainer
-GameBasics.prototype.popPosition = function () {
-  this.positionContainer.pop();
-};
 
-// GameBasics start - Starting the loop
-GameBasics.prototype.start = function () {
-  //Specify the interval in milliseconds 
-  setInterval(function () { gameLoop(play); }, this.setting.updateSeconds * 1000); //0,01666667 sec * 1000 = 16,67 ms
-  //Go into the Opening position
-  this.goToPosition(new OpeningPosition());
-}
 
-// Notifies the game when a key is pressed
-GameBasics.prototype.keyDown = function (keyboardCode) {
-  // store the pressed key in 'pressedKeys'
-  this.pressedKeys[keyboardCode] = true;
-  //  it calls the present position's keyDown function
-  if (this.presentPosition() && this.presentPosition().keyDown) {
-    this.presentPosition().keyDown(this, keyboardCode);
-  }
-};
 
-//  Notifies the game when a key is released
-GameBasics.prototype.keyUp = function (keyboardCode) {
-  // delete the released key from 'pressedKeys'
-  delete this.pressedKeys[keyboardCode];
-};
 
 // Game Loop
 function gameLoop(play) {

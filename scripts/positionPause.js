@@ -33,7 +33,7 @@
      }
      // hit esc to start over
      if(keyboardCode == 27){
-         play.pushPosition(new OpeningPosition());
+         play.pushPosition(new GameOverPosition());
      }
 
 }
